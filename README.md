@@ -1,4 +1,4 @@
-# 🖊️ InkFlow — Transparent S Pen Thinking & Planning Workspace for Android
+# 🖊️ GalaxyPen — Transparent S Pen Thinking & Planning Workspace for Android
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
@@ -6,9 +6,9 @@
 [![ML Kit](https://img.shields.io/badge/AI-ML_Kit_Digital_Ink-FBBC04?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/ml-kit/vision/digital-ink-recognition)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**InkFlow** is a modern, high-performance, open-source native Android workspace designed for handwriting, drawing, diagrams, and freeform thinking. Optimized specifically for the **Samsung Galaxy S23 Ultra** and **S Pen** / Android stylus devices.
+**GalaxyPen** is a modern, high-performance, open-source native Android workspace designed for handwriting, drawing, diagrams, and freeform thinking. Optimized specifically for the **Samsung Galaxy S23 Ultra** and **S Pen** / Android stylus devices.
 
-InkFlow combines the speed of immediate handwriting with the power of infinite whiteboard canvases, vector shape recognition, and first-class editable canvas image objects.
+GalaxyPen combines the speed of immediate handwriting with the power of infinite whiteboard canvases, vector shape recognition, and first-class editable canvas image objects.
 
 ---
 
@@ -36,7 +36,7 @@ InkFlow combines the speed of immediate handwriting with the power of infinite w
 ## 🏗️ Project Architecture
 
 ```
-InkFlow/
+GalaxyPen/
 ├── app/
 │   ├── build.gradle.kts
 │   └── src/
