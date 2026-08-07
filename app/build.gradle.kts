@@ -52,6 +52,7 @@ dependencies {
 
     implementation(libs.mlkit.digital.ink)
     implementation(libs.gson)
+    implementation(libs.androidx.input.motionprediction)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

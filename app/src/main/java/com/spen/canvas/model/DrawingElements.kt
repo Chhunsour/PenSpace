@@ -3,8 +3,10 @@ package com.spen.canvas.model
 import android.graphics.Path
 import android.graphics.RectF
 import java.util.UUID
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
+
 
 enum class ActiveTool {
     PEN,
@@ -12,8 +14,10 @@ enum class ActiveTool {
     ERASER,
     LASSO,
     SHAPE,
-    TEXT
+    TEXT,
+    IMAGE
 }
+
 
 enum class EraserMode {
     PRECISION,
@@ -24,7 +28,9 @@ enum class ShapeType {
     LINE,
     ARROW,
     RECTANGLE,
-    CIRCLE
+    CIRCLE,
+    TRIANGLE,
+    DIAMOND
 }
 
 enum class BackgroundType {
@@ -45,6 +51,7 @@ data class InkStroke(
     val baseWidth: Float,
     val isHighlighter: Boolean = false,
     val isEraser: Boolean = false,
+    val isLocked: Boolean = false,
     val bounds: RectF = computeBounds(points)
 ) {
     fun createPath(): Path {
@@ -72,6 +79,7 @@ data class InkStroke(
     }
 
     fun containsPoint(x: Float, y: Float, threshold: Float = 15f): Boolean {
+        if (isLocked) return false
         for (pt in points) {
             val dx = pt.x - x
             val dy = pt.y - y
@@ -103,7 +111,7 @@ data class InkStroke(
 }
 
 /**
- * Geometric shape element (Line, Arrow, Rectangle, Circle).
+ * Geometric shape element (Line, Arrow, Rectangle, Circle, Triangle, Diamond).
  */
 data class ShapeElement(
     val id: String = UUID.randomUUID().toString(),
@@ -114,13 +122,46 @@ data class ShapeElement(
     val endY: Float,
     val color: Long,
     val strokeWidth: Float,
-    val bounds: RectF = RectF(
-        min(startX, endX),
-        min(startY, endY),
-        max(startX, endX),
-        max(startY, endY)
-    )
-)
+    val isLocked: Boolean = false,
+    val bounds: RectF = computeBounds(startX, startY, endX, endY, strokeWidth)
+) {
+    fun containsPoint(x: Float, y: Float, threshold: Float = 18f): Boolean {
+        if (isLocked) return false
+        val totalRadius = threshold + strokeWidth / 2f
+        return when (shapeType) {
+            ShapeType.LINE, ShapeType.ARROW -> {
+                distanceToSegment(x, y, startX, startY, endX, endY) <= totalRadius
+            }
+            ShapeType.RECTANGLE, ShapeType.CIRCLE, ShapeType.TRIANGLE, ShapeType.DIAMOND -> {
+                val expanded = RectF(bounds.left - totalRadius, bounds.top - totalRadius, bounds.right + totalRadius, bounds.bottom + totalRadius)
+                expanded.contains(x, y)
+            }
+        }
+    }
+
+    companion object {
+        fun computeBounds(startX: Float, startY: Float, endX: Float, endY: Float, strokeWidth: Float): RectF {
+            val pad = max(strokeWidth, 12f)
+            return RectF(
+                min(startX, endX) - pad,
+                min(startY, endY) - pad,
+                max(startX, endX) + pad,
+                max(startY, endY) + pad
+            )
+        }
+
+        private fun distanceToSegment(px: Float, py: Float, x1: Float, y1: Float, x2: Float, y2: Float): Float {
+            val dx = x2 - x1
+            val dy = y2 - y1
+            if (dx == 0f && dy == 0f) return hypot(px - x1, py - y1)
+            val t = ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy)
+            val clampedT = t.coerceIn(0f, 1f)
+            val projX = x1 + clampedT * dx
+            val projY = y1 + clampedT * dy
+            return hypot(px - projX, py - projY)
+        }
+    }
+}
 
 /**
  * Typed text element on canvas.
@@ -132,5 +173,42 @@ data class TextElement(
     val y: Float,
     val fontSize: Float = 22f,
     val color: Long = 0xFFF8FAFC,
-    val bounds: RectF = RectF(x, y - fontSize, x + text.length * fontSize * 0.6f, y + fontSize * 0.3f)
-)
+    val isLocked: Boolean = false,
+    val bounds: RectF = RectF(x, y - fontSize, x + max(text.length * fontSize * 0.6f, 40f), y + fontSize * 0.4f)
+) {
+    fun containsPoint(px: Float, py: Float, threshold: Float = 18f): Boolean {
+        if (isLocked) return false
+        val expanded = RectF(bounds.left - threshold, bounds.top - threshold, bounds.right + threshold, bounds.bottom + threshold)
+        return expanded.contains(px, py)
+    }
+}
+
+/**
+ * First-class editable Image element on canvas.
+ */
+data class ImageElement(
+    val id: String = UUID.randomUUID().toString(),
+    val localPath: String,
+    val x: Float,
+    val y: Float,
+    val width: Float,
+    val height: Float,
+    val rotationDegrees: Float = 0f,
+    val isLocked: Boolean = false,
+    val bounds: RectF = computeBounds(x, y, width, height)
+) {
+    fun containsPoint(px: Float, py: Float, threshold: Float = 15f): Boolean {
+        if (isLocked) return false
+        val expanded = RectF(bounds.left - threshold, bounds.top - threshold, bounds.right + threshold, bounds.bottom + threshold)
+        return expanded.contains(px, py)
+    }
+
+    companion object {
+        fun computeBounds(x: Float, y: Float, width: Float, height: Float): RectF {
+            return RectF(x, y, x + width, y + height)
+        }
+    }
+}
+
+
+

@@ -10,6 +10,7 @@ activityCompose = "1.9.3"
 composeBom = "2024.11.00"
 mlkitDigitalInk = "18.1.0"
 gson = "2.10.1"
+inputMotionPrediction = "1.0.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -27,6 +28,7 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 androidx-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 mlkit-digital-ink = { group = "com.google.mlkit", name = "digital-ink-recognition", version.ref = "mlkitDigitalInk" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+androidx-input-motionprediction = { group = "androidx.input", name = "input-motionprediction", version.ref = "inputMotionPrediction" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

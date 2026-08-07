@@ -1,4 +1,4 @@
-# 🖊️ PenSpace — S Pen Thinking & Planning Workspace for Android
+# 🖊️ InkFlow — Transparent S Pen Thinking & Planning Workspace for Android
 
 [![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
@@ -6,30 +6,37 @@
 [![ML Kit](https://img.shields.io/badge/AI-ML_Kit_Digital_Ink-FBBC04?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/ml-kit/vision/digital-ink-recognition)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
 
-**PenSpace** is a high-performance, native Android thinking, planning, and note-taking workspace optimized specifically for the **Samsung Galaxy S23 Ultra** and **S Pen** / Android stylus devices.
+**InkFlow** is a modern, high-performance, open-source native Android workspace designed for handwriting, drawing, diagrams, and freeform thinking. Optimized specifically for the **Samsung Galaxy S23 Ultra** and **S Pen** / Android stylus devices.
 
-Designed as a lightweight combination of Samsung Notes, an infinite whiteboard, and a structured planning canvas.
+InkFlow combines the speed of immediate handwriting with the power of infinite whiteboard canvases, vector shape recognition, and first-class editable canvas image objects.
 
 ---
 
 ## ✨ Features
 
-- 🖋️ **Ultra-Low Latency Freehand Ink**: Custom hardware-accelerated stylus engine extracting sub-pixel historical digitizer events (`getHistoricalX/Y/Pressure`) for 120Hz refresh.
-- 📐 **Vector Shapes & "Draw & Hold" Auto-Clean**: Draw rough lines, arrows, rectangles, or circles and hold the S Pen tip at the end to auto-convert them into clean vector shapes.
-- 🔍 **Focal-Point Canvas Navigation**: Figma-style 0.2x to 10.0x zoom and pan anchored dynamically around gesture focal points in World Space ($x_{canvas}, y_{canvas}$).
-- 🔘 **S Pen Side Button Temporary Eraser**: Press and hold the physical S Pen side button to temporarily erase ink without changing your selected toolbar tool.
-- 🔤 **On-Device Handwriting Recognition**: Powered by Google ML Kit Digital Ink Recognition to convert handwritten notes into editable text.
-- 🪄 **Lasso Selection**: Freehand polygon selection loop to move, scale, duplicate, delete, or convert handwriting.
-- 📝 **Typed Text & Highlighters**: Semi-transparent highlighter brush and editable typed text elements.
-- 🎨 **Canvas Background Patterns**: Plain, Dots, Grid (Graph Paper), and Line notebook backgrounds.
-- 💾 **Local Persistence**: Debounced JSON persistence saving strokes, vector shapes, text, zoom scale, and canvas state locally.
+- 🖋️ **Ultra-Low Latency S Pen Engine**: Hardware-accelerated custom view utilizing sub-pixel historical digitizer events (`getHistoricalX/Y/Pressure`) and Android `MotionEventPredictor` for ultra-fast, zero-lag drawing on 120Hz AMOLED displays.
+- 🏠 **Glassmorphic Workspace Homepage**:
+  - **Quick Note CTA**: Instant blank canvas launch with template quick choices (`Plain`, `Grid`, `Dots`, `Lines`).
+  - **Continue Working**: Horizontal carousel showing your 5 most recently edited notes with live canvas thumbnail previews.
+  - **Notes Library**: Responsive grid/list view with live search, filter chips (`All`, `Favorites`, `Trash`), and dropdown sorting.
+- 🖼️ **First-Class Editable Canvas Images**:
+  - Insert images via modern Android Photo Picker or paste directly from system clipboard.
+  - Full object manipulation: Move, scale with corner handles, free rotation, duplicate, delete, copy/cut/paste, layer order (`Bring Forward` / `Send Backward`), and **Object Locking** (to write notes over reference photos).
+  - Images persist safely in app internal storage (`files/images/`) without breaking permissions.
+- 📐 **Extended Smart Shape Recognition**: Draw rough lines, arrows, rectangles, circles, triangles, or diamonds and hold the S Pen tip to auto-convert into clean vector shapes.
+- 🧽 **Universal Eraser**: Erases freehand strokes, highlighter marks, shape objects, typed text, and unlocked images consistently without ghost artifacts.
+- 🔘 **Momentary S Pen Side Button Eraser**: Press and hold the physical S Pen button (or flip to eraser tip) to temporarily erase on the fly without changing your active tool.
+- 🔤 **On-Device ML Kit Handwriting Recognition**: Powered by Google ML Kit Digital Ink Recognition to convert handwritten notes into editable text elements on device.
+- 🪄 **Lasso Selection & Multi-Object Transforms**: Polygon selection loop to move, scale, rotate, duplicate, delete, convert, or lock canvas elements.
+- 👁️ **Focus Mode & Adaptive UI Fading**: Toolbar automatically fades to 15% opacity while writing to maximize screen area for creative focus.
+- 🎨 **Canvas Paper Styles & Themes**: `Charcoal`, `White`, `Paper`, `OLED True Black` canvas surfaces with dark and light app UI theme modes.
 
 ---
 
-## 🏗️ Architecture
+## 🏗️ Project Architecture
 
 ```
-/Users/macbook/Documents/Android App/
+InkFlow/
 ├── app/
 │   ├── build.gradle.kts
 │   └── src/
@@ -38,23 +45,29 @@ Designed as a lightweight combination of Samsung Notes, an infinite whiteboard, 
 │       │   ├── java/com/spen/canvas/
 │       │   │   ├── MainActivity.kt
 │       │   │   ├── geometry/
-│       │   │   │   └── ShapeRecognizer.kt    # "Draw & Hold" shape auto-straightener
+│       │   │   │   └── ShapeRecognizer.kt         # "Draw & Hold" vector shape recognizer
 │       │   │   ├── ml/
-│       │   │   │   └── HandwritingRecognizer.kt # ML Kit Digital Ink engine
+│       │   │   │   └── HandwritingRecognizer.kt    # ML Kit Digital Ink recognition engine
 │       │   │   ├── model/
-│       │   │   │   ├── DrawingElements.kt    # InkStroke, ShapeElement, TextElement
-│       │   │   │   ├── LassoSelection.kt     # Polygon ray-casting & bounding box
-│       │   │   │   └── CanvasDocument.kt     # Persistence snapshot model
+│       │   │   │   ├── DrawingElements.kt         # InkStroke, ShapeElement, TextElement, ImageElement
+│       │   │   │   ├── LassoSelection.kt          # Polygon ray-casting & bounding box
+│       │   │   │   ├── CanvasDocument.kt          # Document persistence snapshot
+│       │   │   │   └── AppSettings.kt            # Appearance & S Pen preferences
 │       │   │   ├── repository/
-│       │   │   │   └── CanvasRepository.kt   # JSON Autosave repository
+│       │   │   │   └── CanvasRepository.kt        # JSON autosave & internal image store
 │       │   │   └── ui/
-│       │   │       ├── CanvasScreen.kt        # Jetpack Compose workspace UI & dock
-│       │   │       ├── DrawingViewModel.kt    # StateFlow & Undo/Redo history
-│       │   │       └── canvas/
-│       │   │           └── StylusCanvasView.kt# Hardware-accelerated S Pen view
+│       │   │       ├── CanvasScreen.kt             # Floating glass toolbar & Compose workspace
+│       │   │       ├── DrawingViewModel.kt         # StateFlow & Undo/Redo snapshot history
+│       │   │       ├── canvas/
+│       │   │       │   └── StylusCanvasView.kt     # Hardware-accelerated S Pen canvas view
+│       │   │       ├── home/
+│       │   │       │   ├── NoteHomeScreen.kt       # Glassmorphic homepage & library grid/list
+│       │   │       │   └── NoteThumbnailGenerator.kt # Dual-level cached canvas thumbnail renderer
+│       │   │       └── theme/
+│       │   │           └── AppColors.kt           # Color palettes & theme resolver
 │       │   └── res/values/themes.xml
 │       └── test/java/com/spen/canvas/
-│           └── StrokeModelTest.kt             # Unit test suite
+│           └── StrokeModelTest.kt                  # Unit test suite
 ├── gradle/libs.versions.toml
 ├── build.gradle.kts
 ├── settings.gradle.kts
@@ -63,7 +76,7 @@ Designed as a lightweight combination of Samsung Notes, an infinite whiteboard, 
 
 ---
 
-## 🛠️ Development Environment & Requirements
+## 🛠️ Requirements & Environment
 
 - **Android Studio**: Ladybug / Koala (2024.1+) or newer
 - **JDK**: Java 17 (bundled with Android Studio JBR)
@@ -89,16 +102,27 @@ cd PenSpace
 ```bash
 ./gradlew assembleDebug
 ```
-*Generated APK output location:*
+*Output APK location:*
 `app/build/outputs/apk/debug/app-debug.apk`
 
-### 4. Install on Samsung Galaxy S23 Ultra via ADB
+### 4. Install on Samsung Device via ADB
 ```bash
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 export PATH="$ANDROID_HOME/platform-tools:$PATH"
 
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to open an issue or submit a pull request:
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 

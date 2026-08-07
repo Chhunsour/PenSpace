@@ -6,6 +6,18 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
+ * Clipboard container for copied / cut canvas content.
+ */
+data class ClipboardData(
+    val strokes: List<InkStroke> = emptyList(),
+    val shapes: List<ShapeElement> = emptyList(),
+    val textElements: List<TextElement> = emptyList(),
+    val images: List<ImageElement> = emptyList()
+) {
+    fun isEmpty(): Boolean = strokes.isEmpty() && shapes.isEmpty() && textElements.isEmpty() && images.isEmpty()
+}
+
+/**
  * Manages Lasso selection state and enclosed elements.
  */
 data class LassoSelection(
@@ -13,12 +25,16 @@ data class LassoSelection(
     val selectedStrokeIds: Set<String> = emptySet(),
     val selectedShapeIds: Set<String> = emptySet(),
     val selectedTextIds: Set<String> = emptySet(),
+    val selectedImageIds: Set<String> = emptySet(),
     val bounds: RectF = RectF(),
     val translationX: Float = 0f,
     val translationY: Float = 0f,
-    val scaleFactor: Float = 1.0f
+    val scaleFactor: Float = 1.0f,
+    val rotationDegrees: Float = 0f
 ) {
-    fun isActive(): Boolean = selectedStrokeIds.isNotEmpty() || selectedShapeIds.isNotEmpty() || selectedTextIds.isNotEmpty()
+    fun isActive(): Boolean = selectedStrokeIds.isNotEmpty() || selectedShapeIds.isNotEmpty() || selectedTextIds.isNotEmpty() || selectedImageIds.isNotEmpty()
+
+
 
     fun createPath(): Path {
         val path = Path()
@@ -55,9 +71,10 @@ data class LassoSelection(
         fun computeBoundingBox(
             strokes: List<InkStroke>,
             shapes: List<ShapeElement>,
-            texts: List<TextElement>
+            texts: List<TextElement>,
+            images: List<ImageElement> = emptyList()
         ): RectF {
-            if (strokes.isEmpty() && shapes.isEmpty() && texts.isEmpty()) return RectF()
+            if (strokes.isEmpty() && shapes.isEmpty() && texts.isEmpty() && images.isEmpty()) return RectF()
 
             var minX = Float.MAX_VALUE
             var minY = Float.MAX_VALUE
@@ -85,7 +102,15 @@ data class LassoSelection(
                 if (t.bounds.bottom > maxY) maxY = t.bounds.bottom
             }
 
+            for (img in images) {
+                if (img.bounds.left < minX) minX = img.bounds.left
+                if (img.bounds.top < minY) minY = img.bounds.top
+                if (img.bounds.right > maxX) maxX = img.bounds.right
+                if (img.bounds.bottom > maxY) maxY = img.bounds.bottom
+            }
+
             return RectF(minX, minY, maxX, maxY)
         }
+
     }
 }
