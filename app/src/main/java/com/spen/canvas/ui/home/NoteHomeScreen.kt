@@ -123,7 +123,7 @@ fun NoteHomeScreen(
                     }
                     Column {
                         Text(
-                            text = "InkFlow",
+                            text = "GalaxyPen",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Bold,
                             color = colors.onPanel

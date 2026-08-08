@@ -1,73 +1,102 @@
-# 🖊️ GalaxyPen — Transparent S Pen Thinking & Planning Workspace for Android
+<div align="center">
 
-[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.0.21-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org)
-[![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)](https://developer.android.com/jetpack/compose)
-[![ML Kit](https://img.shields.io/badge/AI-ML_Kit_Digital_Ink-FBBC04?style=for-the-badge&logo=google&logoColor=white)](https://developers.google.com/ml-kit/vision/digital-ink-recognition)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+  <h1>🖊️ GalaxyPen</h1>
+  <p><strong>Ultra-Low Latency S Pen Thinking, Sketching & Planning Workspace for Android</strong></p>
 
-**GalaxyPen** is a modern, high-performance, open-source native Android workspace designed for handwriting, drawing, diagrams, and freeform thinking. Optimized specifically for the **Samsung Galaxy S23 Ultra** and **S Pen** / Android stylus devices.
+  <p>
+    <em>Created with ❤️ by <strong>Chhunsour</strong></em>
+  </p>
 
-GalaxyPen combines the speed of immediate handwriting with the power of infinite whiteboard canvases, vector shape recognition, and first-class editable canvas image objects.
+  <p>
+    <a href="https://github.com/Chhunsour/PenSpace"><img src="https://img.shields.io/badge/Created_By-Chhunsour-7B2CBF?style=for-the-badge&logo=github&logoColor=white" alt="Created By Chhunsour" /></a>
+    <a href="https://developer.android.com"><img src="https://img.shields.io/badge/Platform-Android_15_(API_35)-3DDC84?style=for-the-badge&logo=android&logoColor=white" alt="Platform" /></a>
+    <a href="https://kotlinlang.org"><img src="https://img.shields.io/badge/Language-Kotlin_2.0-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white" alt="Kotlin" /></a>
+    <a href="https://developer.android.com/jetpack/compose"><img src="https://img.shields.io/badge/UI-Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white" alt="Jetpack Compose" /></a>
+    <a href="https://developers.google.com/ml-kit/vision/digital-ink-recognition"><img src="https://img.shields.io/badge/AI-ML_Kit_Digital_Ink-FBBC04?style=for-the-badge&logo=google&logoColor=white" alt="ML Kit" /></a>
+    <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-007ACC.svg?style=for-the-badge" alt="License" /></a>
+  </p>
 
----
-
-## ✨ Features
-
-- 🖋️ **Ultra-Low Latency S Pen Engine**: Hardware-accelerated custom view utilizing sub-pixel historical digitizer events (`getHistoricalX/Y/Pressure`) and Android `MotionEventPredictor` for ultra-fast, zero-lag drawing on 120Hz AMOLED displays.
-- 🏠 **Glassmorphic Workspace Homepage**:
-  - **Quick Note CTA**: Instant blank canvas launch with template quick choices (`Plain`, `Grid`, `Dots`, `Lines`).
-  - **Continue Working**: Horizontal carousel showing your 5 most recently edited notes with live canvas thumbnail previews.
-  - **Notes Library**: Responsive grid/list view with live search, filter chips (`All`, `Favorites`, `Trash`), and dropdown sorting.
-- 🖼️ **First-Class Editable Canvas Images**:
-  - Insert images via modern Android Photo Picker or paste directly from system clipboard.
-  - Full object manipulation: Move, scale with corner handles, free rotation, duplicate, delete, copy/cut/paste, layer order (`Bring Forward` / `Send Backward`), and **Object Locking** (to write notes over reference photos).
-  - Images persist safely in app internal storage (`files/images/`) without breaking permissions.
-- 📐 **Extended Smart Shape Recognition**: Draw rough lines, arrows, rectangles, circles, triangles, or diamonds and hold the S Pen tip to auto-convert into clean vector shapes.
-- 🧽 **Universal Eraser**: Erases freehand strokes, highlighter marks, shape objects, typed text, and unlocked images consistently without ghost artifacts.
-- 🔘 **Momentary S Pen Side Button Eraser**: Press and hold the physical S Pen button (or flip to eraser tip) to temporarily erase on the fly without changing your active tool.
-- 🔤 **On-Device ML Kit Handwriting Recognition**: Powered by Google ML Kit Digital Ink Recognition to convert handwritten notes into editable text elements on device.
-- 🪄 **Lasso Selection & Multi-Object Transforms**: Polygon selection loop to move, scale, rotate, duplicate, delete, convert, or lock canvas elements.
-- 👁️ **Focus Mode & Adaptive UI Fading**: Toolbar automatically fades to 15% opacity while writing to maximize screen area for creative focus.
-- 🎨 **Canvas Paper Styles & Themes**: `Charcoal`, `White`, `Paper`, `OLED True Black` canvas surfaces with dark and light app UI theme modes.
+</div>
 
 ---
 
-## 🏗️ Project Architecture
+> [!NOTE]
+> **GalaxyPen** is a native, high-performance Android drawing and note-taking workspace created by **[Chhunsour](https://github.com/Chhunsour)**. It is engineered to combine zero-lag stylus responsiveness with powerful freeform canvas tools, hardware-accelerated image objects, vector shape auto-recognition, and on-device AI handwriting recognition.
+
+---
+
+## 🌟 Key Features & Capabilities
+
+### 🖊️ High-Performance Pen Engine
+- **Hardware-Accelerated Low-Latency Canvas**: Custom `StylusCanvasView` extracting sub-pixel historical digitizer coordinates (`getHistoricalX/Y/Pressure`) for smooth, real-time stroke rendering.
+- **Stroke Prediction**: Integrates Android `MotionEventPredictor` to eliminate input lag on 120Hz AMOLED displays.
+- **Physical S Pen Side-Button Integration**: Press and hold the S Pen button for momentary erasing without switching active tools.
+
+### 📐 Smart Tools & Object Manipulation
+- **Draw & Hold Shape Vectorization**: Automatic recognition of straight lines, arrows, rectangles, circles, triangles, and diamonds.
+- **Lasso Selection Tool**: Freeform polygon selection loop to transform, move, scale, rotate, duplicate, delete, or lock stroke clusters and canvas objects.
+- **First-Class Image Objects**: Insert reference images via Android Photo Picker or system clipboard. Supports free scaling, rotation, z-index layering (`Bring Forward` / `Send Backward`), and **Object Locking** for annotating directly over photos.
+- **Universal Eraser**: Cleanly erases freehand pen, highlighter marks, shape vectors, text elements, and unlocked images without ghost artifacts.
+
+### 🧠 On-Device AI & Note Organization
+- **Google ML Kit Digital Ink Recognition**: Convert handwritten notes into editable text elements directly on device.
+- **Glassmorphic Homepage Workspace**:
+  - **Quick Start Canvas**: Launch blank notes immediately with instant paper templates (`Plain`, `Grid`, `Dots`, `Lines`).
+  - **Recent Notes Carousel**: Fast access to your 5 most recently updated notes with dual-level cached live thumbnail previews.
+  - **Notes Library Grid & List Views**: Search, filter by tags (`All`, `Favorites`, `Trash`), and sort notes by title or last updated date.
+- **Focus Mode & Adaptive UI Fading**: Floating toolbars automatically dim to 15% opacity while writing to maximize creative canvas space.
+- **Custom Canvas Themes**: Choose between `Charcoal`, `Classic White`, `Vintage Paper`, and `OLED True Black` surfaces with dark and light app UI modes.
+
+---
+
+## 📸 Feature Overview Table
+
+| Feature Category | Highlights & Capabilities | Tech Stack / API |
+| :--- | :--- | :--- |
+| **Stylus Engine** | Sub-pixel sampling, Pressure Sensitivity, Motion Prediction | Custom View, `MotionEventPredictor` |
+| **Shape AI** | Smart "Draw & Hold" vector recognition for 6+ shape types | Custom Vector Geometry Engine |
+| **Handwriting AI** | On-Device ML Ink-to-Text conversion | Google ML Kit Digital Ink |
+| **Image Canvas** | Clipboard paste, photo picker, layering, z-index, object lock | Internal File Storage & Canvas Matrices |
+| **State & Persistence** | Autosave, snapshot undo/redo history, JSON document state | StateFlow, Gson, Internal Storage |
+| **UI & Workspace** | Glassmorphic design, focus fading, dark/light themes, template switcher | Jetpack Compose & Material 3 |
+
+---
+
+## 🏗️ System Architecture & Codebase Map
 
 ```
 GalaxyPen/
 ├── app/
-│   ├── build.gradle.kts
+│   ├── build.gradle.kts                      # Dependency & SDK configuration (API 35)
 │   └── src/
 │       ├── main/
 │       │   ├── AndroidManifest.xml
 │       │   ├── java/com/spen/canvas/
-│       │   │   ├── MainActivity.kt
+│       │   │   ├── MainActivity.kt            # Edge-to-edge entry point
 │       │   │   ├── geometry/
-│       │   │   │   └── ShapeRecognizer.kt         # "Draw & Hold" vector shape recognizer
+│       │   │   │   └── ShapeRecognizer.kt     # "Draw & Hold" vector shape engine
 │       │   │   ├── ml/
-│       │   │   │   └── HandwritingRecognizer.kt    # ML Kit Digital Ink recognition engine
+│       │   │   │   └── HandwritingRecognizer.kt # ML Kit Digital Ink engine
 │       │   │   ├── model/
-│       │   │   │   ├── DrawingElements.kt         # InkStroke, ShapeElement, TextElement, ImageElement
-│       │   │   │   ├── LassoSelection.kt          # Polygon ray-casting & bounding box
-│       │   │   │   ├── CanvasDocument.kt          # Document persistence snapshot
-│       │   │   │   └── AppSettings.kt            # Appearance & S Pen preferences
+│       │   │   │   ├── DrawingElements.kt     # InkStroke, ShapeElement, TextElement, ImageElement
+│       │   │   │   ├── LassoSelection.kt      # Polygon ray-casting & selection bounds
+│       │   │   │   ├── CanvasDocument.kt      # Document state & serialization model
+│       │   │   │   └── AppSettings.kt        # User preferences & stylus settings
 │       │   │   ├── repository/
-│       │   │   │   └── CanvasRepository.kt        # JSON autosave & internal image store
+│       │   │   │   └── CanvasRepository.kt    # JSON autosave & internal storage manager
 │       │   │   └── ui/
-│       │   │       ├── CanvasScreen.kt             # Floating glass toolbar & Compose workspace
-│       │   │       ├── DrawingViewModel.kt         # StateFlow & Undo/Redo snapshot history
+│       │   │       ├── CanvasScreen.kt        # Floating glass toolbar & Compose workspace
+│       │   │       ├── DrawingViewModel.kt    # StateFlow state management & Undo/Redo history
 │       │   │       ├── canvas/
-│       │   │       │   └── StylusCanvasView.kt     # Hardware-accelerated S Pen canvas view
+│       │   │       │   └── StylusCanvasView.kt# Low-latency S Pen drawing view
 │       │   │       ├── home/
-│       │   │       │   ├── NoteHomeScreen.kt       # Glassmorphic homepage & library grid/list
-│       │   │       │   └── NoteThumbnailGenerator.kt # Dual-level cached canvas thumbnail renderer
+│       │   │       │   ├── NoteHomeScreen.kt  # Glassmorphic homepage & library view
+│       │   │       │   └── NoteThumbnailGenerator.kt # Cached canvas thumbnail renderer
 │       │   │       └── theme/
-│       │   │           └── AppColors.kt           # Color palettes & theme resolver
-│       │   └── res/values/themes.xml
+│       │   │           └── AppColors.kt       # Theme palettes & surface resolvers
+│       │   └── res/
 │       └── test/java/com/spen/canvas/
-│           └── StrokeModelTest.kt                  # Unit test suite
+│           └── StrokeModelTest.kt             # Unit test suite
 ├── gradle/libs.versions.toml
 ├── build.gradle.kts
 ├── settings.gradle.kts
@@ -76,16 +105,24 @@ GalaxyPen/
 
 ---
 
-## 🛠️ Requirements & Environment
+## 🛠️ Tech Stack & Dependencies
 
-- **Android Studio**: Ladybug / Koala (2024.1+) or newer
-- **JDK**: Java 17 (bundled with Android Studio JBR)
-- **Target SDK**: Android 15 (API 35) | **Min SDK**: Android 8.0 (API 26)
-- **Gradle**: 8.7 (Wrapper included)
+- **Language**: [Kotlin 2.0](https://kotlinlang.org/)
+- **UI Framework**: [Jetpack Compose](https://developer.android.com/jetpack/compose) with Material 3 & Extended Icons
+- **Target SDK**: Android 15 (API level 35) | **Min SDK**: Android 8.0 (API level 26)
+- **Machine Learning**: [Google ML Kit Digital Ink Recognition](https://developers.google.com/ml-kit/vision/digital-ink-recognition)
+- **Stylus Input**: Android `androidx.input.motionprediction` (`MotionEventPredictor`)
+- **Data & Serialization**: Google Gson for fast JSON persistence
+- **Build System**: Gradle 8.7 (Kotlin DSL)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Build Instructions
+
+### Prerequisites
+- **Android Studio**: Ladybug / Koala (2024.1+) or newer
+- **JDK**: Java 17 (bundled with Android Studio)
+- **Device**: Android 8.0+ device (Samsung Galaxy Note / S-Series with S Pen strongly recommended)
 
 ### 1. Clone the Repository
 ```bash
@@ -102,30 +139,37 @@ cd PenSpace
 ```bash
 ./gradlew assembleDebug
 ```
-*Output APK location:*
-`app/build/outputs/apk/debug/app-debug.apk`
+> The compiled APK will be located at:
+> `app/build/outputs/apk/debug/app-debug.apk`
 
-### 4. Install on Samsung Device via ADB
+### 4. Deploy to Connected Device via ADB
 ```bash
+# Ensure ANDROID_HOME environment variable is set
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 export PATH="$ANDROID_HOME/platform-tools:$PATH"
 
+# Install APK
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
 ---
 
-## 🤝 Contributing
+## 👤 Author & Creator
 
-Contributions are welcome! Please feel free to open an issue or submit a pull request:
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Designed, engineered, and maintained with passion by **Chhunsour**.
+
+- 🐙 **GitHub**: [@Chhunsour](https://github.com/Chhunsour)
+- 📁 **Repository**: [Chhunsour/PenSpace](https://github.com/Chhunsour/PenSpace)
+
+> [!TIP]
+> If you find this project helpful or inspiring, feel free to star ⭐ the repository on GitHub!
 
 ---
 
 ## 📜 License
 
-Distributed under the MIT License. See `LICENSE` for details.
+Distributed under the **MIT License**. See `LICENSE` for details.
+
+<div align="center">
+  <sub>Created By <strong>Chhunsour</strong> • Built for Android with Jetpack Compose & Kotlin</sub>
+</div>
