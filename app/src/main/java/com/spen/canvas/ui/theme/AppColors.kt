@@ -25,23 +25,23 @@ data class AppColors(
 
 private val DarkChrome = AppColors(
     isDark = true,
-    panel = Color(0xF21E293B),
-    panelBorder = Color(0x33FFFFFF),
+    panel = Color(0xFF1E293B),
+    panelBorder = Color(0xFF334155),
     onPanel = Color(0xFFF8FAFC),
     onPanelMuted = Color(0xFF94A3B8),
-    divider = Color(0x22FFFFFF),
-    accent = Color(0xFF3B82F6),
-    danger = Color(0xFFF87171)
+    divider = Color(0xFF334155),
+    accent = Color(0xFF6366F1),
+    danger = Color(0xFFEF4444)
 )
 
 private val LightChrome = AppColors(
     isDark = false,
-    panel = Color(0xF6FFFFFF),
-    panelBorder = Color(0x14000000),
+    panel = Color(0xFFFFFFFF),
+    panelBorder = Color(0xFFE2E8F0),
     onPanel = Color(0xFF0F172A),
     onPanelMuted = Color(0xFF64748B),
-    divider = Color(0x14000000),
-    accent = Color(0xFF2563EB),
+    divider = Color(0xFFE2E8F0),
+    accent = Color(0xFF4F46E5),
     danger = Color(0xFFDC2626)
 )
 

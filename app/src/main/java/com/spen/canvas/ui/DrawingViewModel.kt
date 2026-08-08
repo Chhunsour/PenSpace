@@ -197,9 +197,13 @@ class DrawingViewModel(application: Application) : AndroidViewModel(application)
     }
 
     fun createNewNote(bgType: BackgroundType = BackgroundType.PLAIN): CanvasDocument {
+        val dateFormatted = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault()).format(java.util.Date())
+        val existingCount = _notesList.value.count { it.title == dateFormatted || it.title.startsWith("$dateFormatted (") }
+        val autoTitle = if (existingCount == 0) dateFormatted else "$dateFormatted ($existingCount)"
+
         val newDoc = CanvasDocument(
             id = UUID.randomUUID().toString(),
-            title = "Untitled Note",
+            title = autoTitle,
             backgroundType = bgType,
             createdAt = System.currentTimeMillis(),
             lastModified = System.currentTimeMillis()
@@ -284,6 +288,90 @@ class DrawingViewModel(application: Application) : AndroidViewModel(application)
             if (updated != null && _currentNoteId.value == noteId) {
                 _isFavorite.value = updated.isFavorite
             }
+            loadNotesList()
+        }
+    }
+
+    /**
+     * Rename a note from the library without navigating into it.
+     * Keeps the in-memory title in sync when the renamed note happens to be open.
+     */
+    fun renameNote(noteId: String, newTitle: String) {
+        val cleaned = newTitle.trim().ifBlank { return }
+        viewModelScope.launch {
+            val doc = repository.loadDocument(noteId) ?: return@launch
+            repository.saveDocument(doc.copy(title = cleaned, lastModified = System.currentTimeMillis()))
+            if (_currentNoteId.value == noteId) {
+                _noteTitle.value = cleaned
+            }
+            loadNotesList()
+        }
+    }
+
+    /** Move several notes to the trash in one pass, refreshing the list once at the end. */
+    fun trashNotes(noteIds: Set<String>) {
+        if (noteIds.isEmpty()) return
+        viewModelScope.launch {
+            val now = System.currentTimeMillis()
+            noteIds.forEach { id ->
+                val doc = repository.loadDocument(id) ?: return@forEach
+                repository.saveDocument(doc.copy(isDeleted = true, deletedAt = now))
+            }
+            if (_currentNoteId.value in noteIds) _currentNoteId.value = null
+            loadNotesList()
+        }
+    }
+
+    /** Restore several notes out of the trash. */
+    fun restoreNotes(noteIds: Set<String>) {
+        if (noteIds.isEmpty()) return
+        viewModelScope.launch {
+            noteIds.forEach { id ->
+                val doc = repository.loadDocument(id) ?: return@forEach
+                repository.saveDocument(doc.copy(isDeleted = false, deletedAt = 0L))
+            }
+            loadNotesList()
+        }
+    }
+
+    /** Permanently delete several notes. Irreversible. */
+    fun purgeNotes(noteIds: Set<String>) {
+        if (noteIds.isEmpty()) return
+        viewModelScope.launch {
+            noteIds.forEach { id -> repository.deleteDocument(id) }
+            if (_currentNoteId.value in noteIds) _currentNoteId.value = null
+            loadNotesList()
+        }
+    }
+
+    /** Mark several notes favorite (or clear the flag) in one pass. */
+    fun setNotesFavorite(noteIds: Set<String>, favorite: Boolean) {
+        if (noteIds.isEmpty()) return
+        viewModelScope.launch {
+            noteIds.forEach { id ->
+                val doc = repository.loadDocument(id) ?: return@forEach
+                if (doc.isFavorite != favorite) {
+                    repository.saveDocument(doc.copy(isFavorite = favorite))
+                }
+            }
+            if (_currentNoteId.value in noteIds) _isFavorite.value = favorite
+            loadNotesList()
+        }
+    }
+
+    /** Duplicate several notes. */
+    fun duplicateNotes(noteIds: Set<String>) {
+        if (noteIds.isEmpty()) return
+        viewModelScope.launch {
+            noteIds.forEach { id -> repository.duplicateDocument(id) }
+            loadNotesList()
+        }
+    }
+
+    /** Permanently delete everything currently in the trash. Irreversible. */
+    fun emptyTrash() {
+        viewModelScope.launch {
+            _notesList.value.filter { it.isDeleted }.forEach { repository.deleteDocument(it.id) }
             loadNotesList()
         }
     }
@@ -540,10 +628,10 @@ class DrawingViewModel(application: Application) : AndroidViewModel(application)
         _shapes.update { it + shape }
     }
 
-    fun addTextElement(text: String, x: Float, y: Float) {
+    fun addTextElement(text: String, x: Float, y: Float, fontSize: Float = 22f, color: Long = _settings.value.defaultInk) {
         if (text.isBlank()) return
         pushUndoSnapshot()
-        val textElem = TextElement(text = text, x = x, y = y, color = _settings.value.defaultInk)
+        val textElem = TextElement(text = text, x = x, y = y, fontSize = fontSize, color = color)
         _textElements.update { it + textElem }
     }
 

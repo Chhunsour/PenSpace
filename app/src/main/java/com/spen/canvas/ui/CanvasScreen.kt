@@ -22,6 +22,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Redo
+import androidx.compose.material.icons.automirrored.filled.RotateLeft
+import androidx.compose.material.icons.automirrored.filled.RotateRight
 import androidx.compose.material.icons.automirrored.filled.Undo
 
 import androidx.compose.material.icons.filled.*
@@ -35,6 +37,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
@@ -43,6 +46,7 @@ import com.spen.canvas.model.*
 import com.spen.canvas.ui.canvas.StylusCanvasView
 import com.spen.canvas.ui.theme.AppColors
 import com.spen.canvas.ui.theme.resolveAppColors
+import com.spen.canvas.ui.settings.SettingsSheetContent
 import java.io.File
 import java.io.FileOutputStream
 
@@ -434,10 +438,10 @@ fun CanvasScreen(
                     }
 
                     IconButton(onClick = { viewModel.rotateLassoSelection(-45f) }) {
-                        Icon(Icons.Default.RotateLeft, contentDescription = "Rotate -45°", tint = colors.onPanel)
+                        Icon(Icons.AutoMirrored.Filled.RotateLeft, contentDescription = "Rotate -45°", tint = colors.onPanel)
                     }
                     IconButton(onClick = { viewModel.rotateLassoSelection(45f) }) {
-                        Icon(Icons.Default.RotateRight, contentDescription = "Rotate +45°", tint = colors.onPanel)
+                        Icon(Icons.AutoMirrored.Filled.RotateRight, contentDescription = "Rotate +45°", tint = colors.onPanel)
                     }
                     IconButton(onClick = { viewModel.scaleLassoSelection(1.2f) }) {
                         Icon(Icons.Default.ZoomIn, contentDescription = "Scale Up", tint = colors.onPanel)
@@ -495,6 +499,7 @@ fun CanvasScreen(
                         PopoverType.HIGHLIGHTER -> HighlighterPopoverContent(viewModel, highlighterColor, highlighterWidth, colors)
                         PopoverType.ERASER -> EraserPopoverContent(viewModel, eraserMode, settings.tempEraserSize, colors)
                         PopoverType.INSERT -> InsertPopoverContent(viewModel, selectedShapeType, activeTool, colors) { activePopover = null }
+                        PopoverType.TASK_STAMPS -> TaskStampsPopoverContent(viewModel, colors) { activePopover = null }
                         null -> {}
                     }
                 }
@@ -534,6 +539,10 @@ fun CanvasScreen(
                 }
                 ToolDockIconButton(Icons.Default.Gesture, "Lasso", activeTool == ActiveTool.LASSO, Color(0xFFA855F7), colors) {
                     tick(); viewModel.setActiveTool(ActiveTool.LASSO); activePopover = null
+                }
+                ToolDockIconButton(Icons.Default.Sell, "Task Badges & Words", activePopover == PopoverType.TASK_STAMPS, Color(0xFFEC4899), colors) {
+                    tick()
+                    activePopover = if (activePopover == PopoverType.TASK_STAMPS) null else PopoverType.TASK_STAMPS
                 }
                 ToolDockIconButton(Icons.Default.Category, "Insert shape or text", activeTool == ActiveTool.SHAPE || activeTool == ActiveTool.TEXT, Color(0xFF10B981), colors) {
                     tick()
@@ -767,7 +776,7 @@ private fun CommandRow(title: String, icon: androidx.compose.ui.graphics.vector.
 }
 
 
-enum class PopoverType { PEN, HIGHLIGHTER, ERASER, INSERT }
+enum class PopoverType { PEN, HIGHLIGHTER, ERASER, INSERT, TASK_STAMPS }
 
 private fun exportAndShare(context: Context, view: StylusCanvasView?) {
     val bitmap = view?.exportToBitmap()
@@ -803,9 +812,10 @@ fun ToolDockIconButton(
 ) {
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(46.dp)
             .clip(CircleShape)
             .background(if (isSelected) accentColor else Color.Transparent)
+            .border(if (isSelected) 2.dp else 0.dp, accentColor.copy(alpha = 0.5f), CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -828,7 +838,7 @@ private fun DockIconButton(
 ) {
     Box(
         modifier = Modifier
-            .size(42.dp)
+            .size(46.dp)
             .clip(CircleShape)
             .clickable(enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center
@@ -841,10 +851,10 @@ private fun DockIconButton(
 private fun ColorSwatch(colorArgb: Long, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .size(30.dp)
+            .size(34.dp)
             .clip(CircleShape)
             .background(Color(colorArgb))
-            .border(if (selected) 3.dp else 1.dp, if (selected) Color(0xFF3B82F6) else Color(0x55FFFFFF), CircleShape)
+            .border(if (selected) 3.dp else 1.dp, if (selected) Color(0xFF6366F1) else Color(0x44FFFFFF), CircleShape)
             .clickable { onClick() }
     )
 }
@@ -971,160 +981,118 @@ fun InsertPopoverContent(
 }
 
 @Composable
-private fun SettingsSheetContent(
-    settings: AppSettings,
-    backgroundType: BackgroundType,
+fun TaskStampsPopoverContent(
+    viewModel: DrawingViewModel,
     colors: AppColors,
-    onBackground: (BackgroundType) -> Unit,
-    onUpdate: ((AppSettings) -> AppSettings) -> Unit
+    onClose: () -> Unit
 ) {
-    val scroll = rememberScrollState()
+    var customText by remember { mutableStateOf("") }
+    val panOffset by viewModel.panOffset.collectAsState()
+    val zoomScale by viewModel.zoomScale.collectAsState()
+    val metrics = LocalContext.current.resources.displayMetrics
+    val screenWidthPx = metrics.widthPixels.toFloat()
+    val screenHeightPx = metrics.heightPixels.toFloat()
+
+    val targetX = ((screenWidthPx / 2f) - panOffset.first) / zoomScale
+    val targetY = ((screenHeightPx / 2f) - panOffset.second) / zoomScale
+
+    fun placeStamp(text: String) {
+        if (text.isBlank()) return
+        viewModel.addTextElement(text = text, x = targetX, y = targetY, fontSize = 24f)
+        viewModel.setActiveTool(ActiveTool.LASSO)
+        onClose()
+    }
+
     Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .verticalScroll(scroll)
-            .padding(horizontal = 20.dp)
-            .padding(bottom = 32.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+            .padding(16.dp)
+            .widthIn(max = 360.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Settings & appearance", style = MaterialTheme.typography.headlineSmall, color = colors.onPanel, fontWeight = FontWeight.SemiBold)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Task Badges & Words", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.onPanel)
+            Text("Tap to place", style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted)
+        }
 
-        SettingsSectionLabel("Writing", colors)
-        Text("Stroke smoothing", style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-        ChipRow(
-            options = listOf(
-                SmoothingLevel.OFF to "Off",
-                SmoothingLevel.STANDARD to "Standard",
-                SmoothingLevel.EXTRA to "Extra"
-            ),
-            selected = settings.strokeSmoothing,
-            colors = colors
-        ) { v -> onUpdate { it.copy(strokeSmoothing = v) } }
-        SettingToggle("Pressure sensitivity", "Vary stroke width with tip pressure", settings.pressureSensitivity, colors) { v -> onUpdate { it.copy(pressureSensitivity = v) } }
+        Text("Office Workflow Presets", style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted, fontWeight = FontWeight.SemiBold)
 
-        SettingsSectionLabel("S Pen", colors)
-        SettingToggle("Side button erases", "Hold the S Pen button to erase, release to resume", settings.sidePenButtonErases, colors) { v -> onUpdate { it.copy(sidePenButtonErases = v) } }
-        SettingSlider("Eraser size", "${settings.tempEraserSize.toInt()} px", settings.tempEraserSize, 20f..120f, colors) { v -> onUpdate { it.copy(tempEraserSize = v) } }
-
-        SettingsSectionLabel("Shapes", colors)
-        SettingToggle("Snap shapes on hold", "Draw a rough shape, pause at the end to clean it up", settings.shapeSnapOnHold, colors) { v -> onUpdate { it.copy(shapeSnapOnHold = v) } }
-        Text("Recognition sensitivity", style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-        ChipRow(
-            options = listOf(
-                ShapeSensitivity.LOW to "Low",
-                ShapeSensitivity.MEDIUM to "Medium",
-                ShapeSensitivity.HIGH to "High"
-            ),
-            selected = settings.shapeSensitivity,
-            colors = colors
-        ) { v -> onUpdate { it.copy(shapeSensitivity = v) } }
-
-        SettingsSectionLabel("Canvas Surface & Grid", colors)
-        Text("Surface background", style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-        ChipRow(
-            options = listOf(
-                CanvasStyle.CHARCOAL to "Charcoal",
-                CanvasStyle.WHITE to "White",
-                CanvasStyle.PAPER to "Warm Paper",
-                CanvasStyle.OLED to "AMOLED Black"
-            ),
-            selected = settings.canvasStyle,
-            colors = colors
-        ) { style -> onUpdate { it.copy(canvasStyle = style) } }
-        Text("Grid pattern", style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-        ChipRow(
-            options = BackgroundType.entries.map { it to it.name.lowercase().replaceFirstChar { c -> c.uppercase() } },
-            selected = backgroundType,
-            colors = colors,
-            onSelect = onBackground
+        val presetBadges = listOf(
+            "🟦 NEW TASK",
+            "🟢 COMPLETED",
+            "📌 TASK",
+            "🚨 DEADLINE",
+            "⚡ IN PROGRESS",
+            "⭐ IMPORTANT",
+            "🔍 REVIEW",
+            "📅 DUE TODAY",
+            "❓ PENDING",
+            "💡 IDEA"
         )
 
-        SettingsSectionLabel("App Chrome Theme", colors)
-        Text("Theme preset", style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            ChipRow(
-                options = listOf(
-                    ThemeMode.SYSTEM to "System",
-                    ThemeMode.LIGHT to "Light",
-                    ThemeMode.DARK to "Dark"
+            presetBadges.chunked(2).forEach { rowBadges ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    rowBadges.forEach { badge ->
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = colors.panelBorder.copy(alpha = 0.35f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable { placeStamp(badge) }
+                        ) {
+                            Text(
+                                text = badge,
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onPanel,
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        HorizontalDivider(color = colors.divider)
+
+        Text("Custom Office Label / Words", style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted, fontWeight = FontWeight.SemiBold)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            OutlinedTextField(
+                value = customText,
+                onValueChange = { customText = it },
+                placeholder = { Text("e.g. Action Item", fontSize = 12.sp, color = colors.onPanelMuted) },
+                singleLine = true,
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedTextColor = colors.onPanel,
+                    unfocusedTextColor = colors.onPanel
                 ),
-                selected = settings.themeMode,
-                colors = colors
-            ) { mode -> onUpdate { it.copy(themeMode = mode) } }
-            ChipRow(
-                options = listOf(
-                    ThemeMode.WARM_PAPER to "Warm Paper",
-                    ThemeMode.TRUE_BLACK to "True Black",
-                    ThemeMode.SOFT_GRAY to "Soft Gray"
-                ),
-                selected = settings.themeMode,
-                colors = colors
-            ) { mode -> onUpdate { it.copy(themeMode = mode) } }
-        }
-        SettingSlider("Toolbar transparency", "${((1f - settings.toolbarOpacity) * 100).toInt()}%", settings.toolbarOpacity, 0.45f..1f, colors) { v -> onUpdate { it.copy(toolbarOpacity = v) } }
-
-
-        SettingsSectionLabel("Ergonomics", colors)
-        SettingToggle("Draw with finger", "Off = one finger pans the canvas (pen-first)", settings.drawWithFinger, colors) { v -> onUpdate { it.copy(drawWithFinger = v) } }
-        SettingToggle("Left-handed dock", "Mirror the tool dock layout", settings.leftHanded, colors) { v -> onUpdate { it.copy(leftHanded = v) } }
-        SettingToggle("Haptic feedback", "Subtle tick on tool changes", settings.hapticFeedback, colors) { v -> onUpdate { it.copy(hapticFeedback = v) } }
-    }
-}
-
-@Composable
-private fun SettingSlider(
-    title: String,
-    valueLabel: String,
-    value: Float,
-    range: ClosedFloatingPointRange<Float>,
-    colors: AppColors,
-    onChange: (Float) -> Unit
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-            Text(valueLabel, style = MaterialTheme.typography.labelMedium, color = colors.onPanelMuted)
-        }
-        Slider(value = value, onValueChange = onChange, valueRange = range)
-    }
-}
-
-@Composable
-private fun SettingsSectionLabel(text: String, colors: AppColors) {
-    Text(text.uppercase(), style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted, fontWeight = FontWeight.SemiBold)
-}
-
-@Composable
-private fun <T> ChipRow(
-    options: List<Pair<T, String>>,
-    selected: T,
-    colors: AppColors,
-    onSelect: (T) -> Unit
-) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        options.forEach { (value, label) ->
-            FilterChip(selected = selected == value, onClick = { onSelect(value) }, label = { Text(label) })
+                modifier = Modifier.weight(1f)
+            )
+            Button(
+                onClick = {
+                    if (customText.isNotBlank()) {
+                        placeStamp("📋 ${customText.trim()}")
+                        customText = ""
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                shape = RoundedCornerShape(10.dp),
+                enabled = customText.isNotBlank()
+            ) {
+                Text("Add", fontWeight = FontWeight.Bold)
+            }
         }
     }
 }
 
-@Composable
-private fun SettingToggle(
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    colors: AppColors,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth().clickable { onCheckedChange(!checked) },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.bodyLarge, color = colors.onPanel)
-            Text(subtitle, style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted)
-        }
-        Switch(checked = checked, onCheckedChange = onCheckedChange)
-    }
-}
+

@@ -3,9 +3,9 @@ package com.spen.canvas.ui.home
 import android.graphics.Bitmap
 import android.text.format.DateUtils
 import androidx.compose.animation.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -18,6 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatAlignLeft
+import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material3.*
@@ -25,8 +28,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -38,8 +44,13 @@ import com.spen.canvas.model.CanvasDocument
 import com.spen.canvas.ui.DrawingViewModel
 import com.spen.canvas.ui.NoteSortOrder
 import com.spen.canvas.ui.theme.resolveAppColors
+import com.spen.canvas.ui.settings.SettingsSheetContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -57,8 +68,7 @@ fun NoteHomeScreen(
 
     val systemDark = isSystemInDarkTheme()
     val colors = resolveAppColors(settings, systemDark)
-    val glass = colors.panel.copy(alpha = settings.toolbarOpacity)
-    val glassBorder = colors.panelBorder.copy(alpha = (colors.panelBorder.alpha * 1.4f).coerceAtMost(1f))
+    val panelColor = colors.panel
 
     val showTrashTab by viewModel.showTrashTab.collectAsState()
 
@@ -66,10 +76,30 @@ fun NoteHomeScreen(
     var renameText by remember { mutableStateOf("") }
     var noteToDelete by remember { mutableStateOf<CanvasDocument?>(null) }
     var isSortMenuExpanded by remember { mutableStateOf(false) }
+    var isSettingsSheetOpen by remember { mutableStateOf(false) }
 
     val activeNotes = remember(notesList) { notesList.filter { !it.isDeleted } }
+    val favCount = remember(activeNotes) { activeNotes.count { it.isFavorite } }
+    val totalStrokesDrawn = remember(activeNotes) { activeNotes.sumOf { it.strokes.size } }
     val recentNotes = remember(activeNotes) {
         activeNotes.sortedByDescending { it.lastModified }.take(5)
+    }
+
+    // Time of day greeting & date string
+    val greeting = remember {
+        val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+        when (hour) {
+            in 4..11 -> "Good Morning"
+            in 12..16 -> "Good Afternoon"
+            in 17..22 -> "Good Evening"
+            else -> "Late Night Studio"
+        }
+    }
+    val currentDateStr = remember {
+        SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date())
+    }
+    val todayDateBadge = remember {
+        SimpleDateFormat("dd/MM/yy", Locale.getDefault()).format(Date())
     }
 
     // Filter & Sort notes for library
@@ -93,6 +123,24 @@ fun NoteHomeScreen(
             .fillMaxSize()
             .background(Color(settings.canvasColor))
     ) {
+        // Ambient Glowing Radial Background Mesh
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(colors.accent.copy(alpha = 0.12f), Color.Transparent),
+                    center = Offset(size.width * 0.85f, size.height * 0.1f),
+                    radius = size.width * 0.7f
+                )
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFF06B6D4).copy(alpha = 0.08f), Color.Transparent),
+                    center = Offset(size.width * 0.15f, size.height * 0.85f),
+                    radius = size.width * 0.6f
+                )
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -100,37 +148,55 @@ fun NoteHomeScreen(
                 .navigationBarsPadding()
                 .padding(horizontal = 18.dp)
         ) {
-            // Workspace Header Bar
+            // Masterclass Workspace Contextual Header
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 12.dp),
+                    .padding(top = 16.dp, bottom = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(colors.accent),
+                            .size(46.dp)
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                Brush.linearGradient(
+                                    colors = listOf(colors.accent, Color(0xFF818CF8))
+                                )
+                            ),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Gesture, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                        Icon(Icons.Default.Gesture, contentDescription = null, tint = Color.White, modifier = Modifier.size(26.dp))
                     }
                     Column {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Text(
+                                text = "GalaxyPen",
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = colors.onPanel
+                            )
+                            Surface(
+                                shape = CircleShape,
+                                color = colors.accent.copy(alpha = 0.18f)
+                            ) {
+                                Text(
+                                    text = "PRO",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = colors.accent,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
                         Text(
-                            text = "GalaxyPen",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = colors.onPanel
-                        )
-                        Text(
-                            text = "S Pen Studio Workspace",
-                            style = MaterialTheme.typography.labelSmall,
+                            text = "$greeting • $currentDateStr",
+                            style = MaterialTheme.typography.labelMedium,
                             color = colors.onPanelMuted
                         )
                     }
@@ -138,43 +204,62 @@ fun NoteHomeScreen(
 
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     IconButton(
-                        onClick = onOpenSettings,
+                        onClick = {
+                            onOpenSettings()
+                            isSettingsSheetOpen = true
+                        },
                         modifier = Modifier
                             .clip(CircleShape)
-                            .background(glass)
-                            .border(1.dp, glassBorder, CircleShape)
+                            .background(panelColor)
                     ) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings", tint = colors.onPanel)
                     }
                 }
             }
 
-            // Quick Note CTA Hero Card
+            // Studio Dashboard Overview Card (Stats + Action)
             Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = glass,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, glassBorder, RoundedCornerShape(22.dp))
+                shape = RoundedCornerShape(24.dp),
+                color = panelColor,
+                shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
+                        Column(modifier = Modifier.weight(1f).padding(end = 12.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text(
+                                    text = "Daily Work Note",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = colors.onPanel
+                                )
+                                Surface(
+                                    shape = RoundedCornerShape(8.dp),
+                                    color = colors.accent.copy(alpha = 0.18f)
+                                ) {
+                                    Text(
+                                        text = todayDateBadge,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = colors.accent,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                            Spacer(Modifier.height(4.dp))
                             Text(
-                                text = "Quick Note",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = colors.onPanel
-                            )
-                            Text(
-                                text = "Take out S Pen & write immediately",
+                                text = "Auto-named with today's date ($todayDateBadge)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.onPanelMuted
                             )
@@ -182,44 +267,95 @@ fun NoteHomeScreen(
 
                         Button(
                             onClick = { viewModel.createNewNote(BackgroundType.PLAIN) },
-                            colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            contentPadding = PaddingValues(0.dp),
                             shape = RoundedCornerShape(16.dp),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                            modifier = Modifier
+                                .height(46.dp)
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(colors.accent, Color(0xFF6366F1))
+                                    ),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(6.dp))
-                            Text("New Note", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    text = "New Note",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.White
+                                )
+                            }
                         }
                     }
 
-                    // Template Shortcuts Row
+                    // Dashboard Quick Stats Bar
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(colors.panelBorder.copy(alpha = 0.25f))
+                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        StatItem(icon = Icons.Default.Description, label = "Active Notes", value = "${activeNotes.size}", colors = colors)
+                        VerticalDivider(modifier = Modifier.height(24.dp).width(1.dp), color = colors.divider)
+                        StatItem(icon = Icons.Default.Star, label = "Favorites", value = "$favCount", colors = colors)
+                        VerticalDivider(modifier = Modifier.height(24.dp).width(1.dp), color = colors.divider)
+                        StatItem(icon = Icons.Default.Edit, label = "Total Strokes", value = "$totalStrokesDrawn", colors = colors)
+                    }
+
+                    // Visual Paper Template Picker Row
+                    Text(
+                        text = "Instant Paper Presets",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = colors.onPanelMuted
+                    )
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        TemplateChip(
+                        PaperTemplateCard(
                             label = "Plain",
-                            icon = Icons.Default.CropSquare,
+                            accentColor = Color(0xFF6366F1),
                             colors = colors,
-                            onClick = { viewModel.createNewNote(BackgroundType.PLAIN) }
+                            onClick = { viewModel.createNewNote(BackgroundType.PLAIN) },
+                            modifier = Modifier.weight(1f)
                         )
-                        TemplateChip(
+                        PaperTemplateCard(
                             label = "Grid",
-                            icon = Icons.Default.GridView,
+                            accentColor = Color(0xFF06B6D4),
                             colors = colors,
-                            onClick = { viewModel.createNewNote(BackgroundType.GRID) }
+                            onClick = { viewModel.createNewNote(BackgroundType.GRID) },
+                            modifier = Modifier.weight(1f)
                         )
-                        TemplateChip(
+                        PaperTemplateCard(
                             label = "Dots",
-                            icon = Icons.Default.Grain,
+                            accentColor = Color(0xFF10B981),
                             colors = colors,
-                            onClick = { viewModel.createNewNote(BackgroundType.DOTS) }
+                            onClick = { viewModel.createNewNote(BackgroundType.DOTS) },
+                            modifier = Modifier.weight(1f)
                         )
-                        TemplateChip(
+                        PaperTemplateCard(
                             label = "Lines",
-                            icon = Icons.Default.FormatAlignLeft,
+                            accentColor = Color(0xFFF59E0B),
                             colors = colors,
-                            onClick = { viewModel.createNewNote(BackgroundType.LINES) }
+                            onClick = { viewModel.createNewNote(BackgroundType.LINES) },
+                            modifier = Modifier.weight(1f)
                         )
                     }
                 }
@@ -227,7 +363,7 @@ fun NoteHomeScreen(
 
             Spacer(Modifier.height(14.dp))
 
-            // Continue Working (Recent Notes Carousel)
+            // Continue Working Carousel
             if (!showTrashTab && searchQuery.isBlank() && !filterFavoritesOnly && recentNotes.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
@@ -244,8 +380,6 @@ fun NoteHomeScreen(
                         items(recentNotes, key = { "recent_${it.id}" }) { note ->
                             RecentNoteCard(
                                 note = note,
-                                glass = glass,
-                                glassBorder = glassBorder,
                                 colors = colors,
                                 onOpen = { viewModel.openNote(note.id) }
                             )
@@ -271,7 +405,7 @@ fun NoteHomeScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box {
                         IconButton(onClick = { isSortMenuExpanded = true }) {
-                            Icon(Icons.Default.Sort, contentDescription = "Sort", tint = colors.onPanelMuted)
+                            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = "Sort", tint = colors.onPanelMuted)
                         }
                         DropdownMenu(
                             expanded = isSortMenuExpanded,
@@ -298,7 +432,7 @@ fun NoteHomeScreen(
 
                     IconButton(onClick = { viewModel.setGridView(!isGridView) }) {
                         Icon(
-                            if (isGridView) Icons.Default.ViewList else Icons.Default.GridView,
+                            if (isGridView) Icons.AutoMirrored.Filled.ViewList else Icons.Default.GridView,
                             contentDescription = "Toggle View",
                             tint = colors.onPanelMuted
                         )
@@ -306,16 +440,14 @@ fun NoteHomeScreen(
                 }
             }
 
-            // Search Bar & Filter Chips
+            // Search Bar Input
             Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = glass,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .border(1.dp, glassBorder, RoundedCornerShape(16.dp))
+                shape = RoundedCornerShape(14.dp),
+                color = panelColor,
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 2.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Search, contentDescription = "Search", tint = colors.onPanelMuted, modifier = Modifier.size(18.dp))
@@ -323,7 +455,7 @@ fun NoteHomeScreen(
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { viewModel.setSearchQuery(it) },
-                        placeholder = { Text("Search notes...", color = colors.onPanelMuted.copy(alpha = 0.7f), fontSize = 14.sp) },
+                        placeholder = { Text("Search notes by title...", color = colors.onPanelMuted.copy(alpha = 0.7f), fontSize = 14.sp) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.Transparent,
@@ -348,18 +480,18 @@ fun NoteHomeScreen(
                 FilterChip(
                     selected = !showTrashTab && !filterFavoritesOnly,
                     onClick = { viewModel.setShowTrashTab(false); viewModel.setFilterFavoritesOnly(false) },
-                    label = { Text("All (${notesList.count { !it.isDeleted }})", fontSize = 12.sp) },
+                    label = { Text("All (${activeNotes.size})", fontSize = 12.sp) },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = colors.accent,
                         selectedLabelColor = Color.White,
-                        containerColor = glass,
+                        containerColor = panelColor,
                         labelColor = colors.onPanel
                     )
                 )
                 FilterChip(
                     selected = !showTrashTab && filterFavoritesOnly,
                     onClick = { viewModel.setShowTrashTab(false); viewModel.setFilterFavoritesOnly(true) },
-                    label = { Text("Favorites", fontSize = 12.sp) },
+                    label = { Text("Favorites ($favCount)", fontSize = 12.sp) },
                     leadingIcon = {
                         Icon(
                             if (filterFavoritesOnly) Icons.Default.Star else Icons.Outlined.StarBorder,
@@ -370,7 +502,7 @@ fun NoteHomeScreen(
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = colors.accent,
                         selectedLabelColor = Color.White,
-                        containerColor = glass,
+                        containerColor = panelColor,
                         labelColor = colors.onPanel
                     )
                 )
@@ -384,7 +516,7 @@ fun NoteHomeScreen(
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = colors.danger,
                         selectedLabelColor = Color.White,
-                        containerColor = glass,
+                        containerColor = panelColor,
                         labelColor = colors.onPanel
                     )
                 )
@@ -392,7 +524,7 @@ fun NoteHomeScreen(
 
             Spacer(Modifier.height(10.dp))
 
-            // Notes List / Grid
+            // Notes List / Grid View
             if (filteredNotes.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -402,20 +534,30 @@ fun NoteHomeScreen(
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
-                        Icon(Icons.Default.EditNote, contentDescription = null, tint = colors.onPanelMuted.copy(alpha = 0.4f), modifier = Modifier.size(48.dp))
+                        Icon(
+                            imageVector = Icons.Default.EditNote,
+                            contentDescription = null,
+                            tint = colors.onPanelMuted.copy(alpha = 0.4f),
+                            modifier = Modifier.size(56.dp)
+                        )
                         Text(
-                            text = if (searchQuery.isNotEmpty()) "No notes match your search" else if (showTrashTab) "Trash is empty" else "No notes yet",
+                            text = if (searchQuery.isNotEmpty()) "No notes match your search" else if (showTrashTab) "Trash is empty" else "No notes created yet",
                             style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
                             color = colors.onPanelMuted
                         )
                         if (!showTrashTab && searchQuery.isBlank()) {
-                            Text(
-                                text = "Tap + New Note to start writing with S Pen",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = colors.onPanelMuted.copy(alpha = 0.6f)
-                            )
+                            Button(
+                                onClick = { viewModel.createNewNote(BackgroundType.PLAIN) },
+                                colors = ButtonDefaults.buttonColors(containerColor = colors.accent),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(6.dp))
+                                Text("Create First Note", style = MaterialTheme.typography.labelMedium)
+                            }
                         }
                     }
                 }
@@ -429,8 +571,6 @@ fun NoteHomeScreen(
                     items(filteredNotes, key = { it.id }) { note ->
                         NoteCard(
                             note = note,
-                            glass = glass,
-                            glassBorder = glassBorder,
                             colors = colors,
                             onOpen = { if (!note.isDeleted) viewModel.openNote(note.id) },
                             onToggleFavorite = { viewModel.toggleFavoriteNote(note.id) },
@@ -455,8 +595,6 @@ fun NoteHomeScreen(
                     items(filteredNotes, key = { it.id }) { note ->
                         NoteRow(
                             note = note,
-                            glass = glass,
-                            glassBorder = glassBorder,
                             colors = colors,
                             onOpen = { if (!note.isDeleted) viewModel.openNote(note.id) },
                             onToggleFavorite = { viewModel.toggleFavoriteNote(note.id) },
@@ -473,6 +611,29 @@ fun NoteHomeScreen(
                         )
                     }
                 }
+            }
+        }
+
+        // Extended Floating Action Button for 1-tap daily note creation
+        ExtendedFloatingActionButton(
+            onClick = { viewModel.createNewNote(BackgroundType.PLAIN) },
+            containerColor = colors.accent,
+            contentColor = Color.White,
+            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 20.dp, bottom = 24.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(Icons.Default.EditNote, contentDescription = "New Daily Note", modifier = Modifier.size(22.dp))
+                Text(
+                    text = "New Note • $todayDateBadge",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
         }
     }
@@ -530,28 +691,66 @@ fun NoteHomeScreen(
             containerColor = colors.panel
         )
     }
+
+    // Homepage Settings Sheet
+    if (isSettingsSheetOpen) {
+        ModalBottomSheet(
+            onDismissRequest = { isSettingsSheetOpen = false },
+            containerColor = colors.panel
+        ) {
+            SettingsSheetContent(
+                settings = settings,
+                backgroundType = BackgroundType.PLAIN,
+                colors = colors,
+                onBackground = {},
+                onUpdate = { viewModel.updateSettings(it) }
+            )
+        }
+    }
 }
 
 @Composable
-private fun TemplateChip(
+private fun StatItem(
+    icon: ImageVector,
     label: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    value: String,
+    colors: com.spen.canvas.ui.theme.AppColors
+) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(icon, contentDescription = null, tint = colors.accent, modifier = Modifier.size(14.dp))
+            Text(value, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = colors.onPanel)
+        }
+        Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onPanelMuted, fontSize = 10.sp)
+    }
+}
+
+@Composable
+private fun PaperTemplateCard(
+    label: String,
+    accentColor: Color,
     colors: com.spen.canvas.ui.theme.AppColors,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     Surface(
         shape = RoundedCornerShape(12.dp),
-        color = colors.panelBorder.copy(alpha = 0.25f),
-        modifier = Modifier
-            .clickable { onClick() }
+        color = colors.panelBorder.copy(alpha = 0.3f),
+        modifier = modifier.clickable { onClick() }
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+            horizontalArrangement = Arrangement.Center
         ) {
-            Icon(icon, contentDescription = null, tint = colors.onPanel, modifier = Modifier.size(14.dp))
-            Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onPanel)
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(accentColor)
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onPanel, fontWeight = FontWeight.SemiBold)
         }
     }
 }
@@ -559,8 +758,6 @@ private fun TemplateChip(
 @Composable
 private fun RecentNoteCard(
     note: CanvasDocument,
-    glass: Color,
-    glassBorder: Color,
     colors: com.spen.canvas.ui.theme.AppColors,
     onOpen: () -> Unit
 ) {
@@ -575,11 +772,10 @@ private fun RecentNoteCard(
 
     Surface(
         shape = RoundedCornerShape(18.dp),
-        color = glass,
+        color = colors.panel,
         modifier = Modifier
             .width(160.dp)
             .height(140.dp)
-            .border(1.dp, glassBorder, RoundedCornerShape(18.dp))
             .clickable { onOpen() }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -620,8 +816,6 @@ private fun RecentNoteCard(
 @Composable
 private fun NoteCard(
     note: CanvasDocument,
-    glass: Color,
-    glassBorder: Color,
     colors: com.spen.canvas.ui.theme.AppColors,
     onOpen: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -642,11 +836,10 @@ private fun NoteCard(
 
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = glass,
+        color = colors.panel,
         modifier = Modifier
             .fillMaxWidth()
-            .height(200.dp)
-            .border(1.dp, glassBorder, RoundedCornerShape(20.dp))
+            .height(180.dp)
             .clickable { onOpen() }
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -697,7 +890,7 @@ private fun NoteCard(
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
-                            text = relativeTime,
+                            text = "$relativeTime • ${note.strokes.size} strokes",
                             style = MaterialTheme.typography.labelSmall,
                             color = colors.onPanelMuted,
                             fontSize = 11.sp
@@ -707,7 +900,7 @@ private fun NoteCard(
                     Box {
                         IconButton(
                             onClick = { isMenuOpen = true },
-                            modifier = Modifier.size(28.dp)
+                            modifier = Modifier.size(36.dp)
                         ) {
                             Icon(Icons.Default.MoreVert, contentDescription = "Options", tint = colors.onPanelMuted)
                         }
@@ -760,8 +953,6 @@ private fun NoteCard(
 @Composable
 private fun NoteRow(
     note: CanvasDocument,
-    glass: Color,
-    glassBorder: Color,
     colors: com.spen.canvas.ui.theme.AppColors,
     onOpen: () -> Unit,
     onToggleFavorite: () -> Unit,
@@ -782,11 +973,10 @@ private fun NoteRow(
 
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = glass,
+        color = colors.panel,
         modifier = Modifier
             .fillMaxWidth()
-            .height(72.dp)
-            .border(1.dp, glassBorder, RoundedCornerShape(16.dp))
+            .height(84.dp)
             .clickable { onOpen() }
     ) {
         Row(

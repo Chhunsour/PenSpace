@@ -23,6 +23,7 @@ import com.spen.canvas.model.ThemeMode
 import com.spen.canvas.ui.CanvasScreen
 import com.spen.canvas.ui.DrawingViewModel
 import com.spen.canvas.ui.home.NoteHomeScreen
+import com.spen.canvas.ui.theme.AppTypography
 import com.spen.canvas.ui.theme.resolveAppColors
 
 class MainActivity : ComponentActivity() {
@@ -53,7 +54,7 @@ class MainActivity : ComponentActivity() {
                 )
             }
 
-            MaterialTheme(colorScheme = colorScheme) {
+            MaterialTheme(colorScheme = colorScheme, typography = AppTypography) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = Color(settings.canvasColor)
